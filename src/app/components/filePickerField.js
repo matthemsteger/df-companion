@@ -50,7 +50,7 @@ export default class FilePickerField extends Component {
 
 		if (path) {
 			this.setState({path}, () => {
-				this.props.onChange({value: path, name: this.props.name}, e);
+				this.props.onChange({value: path, name: this.props.name}, path, e);
 			});
 		}
 	}
@@ -58,19 +58,31 @@ export default class FilePickerField extends Component {
 	render() {
 		return (
 			<div>
-				<p>
-					<input id={this.props.id} name={this.props.name} type="text" placeholder={this.props.placeholder} value={this.state.path} readOnly />
-					<button type="button" onClick={this.handlePicker}>{this.props.pickerText}</button>
-				</p>
+				<div className="field has-addons">
+					<p className="control is-expanded">
+						<input
+							id={this.props.id}
+							className="input"
+							name={this.props.name}
+							type="text"
+							placeholder={this.props.placeholder}
+							value={this.state.path}
+							readOnly
+						/>
+					</p>
+					<p className="control">
+						<button className="button" type="button" onClick={this.handlePicker}>{this.props.pickerText}</button>
+					</p>
+				</div>
 				<div>
 					{
 						!this.props.isValid && this.props.validationMessages.length > 0
-							? <span>{this.props.validationMessages}</span>
+							? <p className="help is-danger">{this.props.validationMessages}</p>
 							: null
 					}
 					{
 						this.props.helpText
-							? <span>{this.props.helpText}</span>
+							? <p className="help">{this.props.helpText}</p>
 							: null
 					}
 				</div>

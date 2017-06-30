@@ -1,8 +1,7 @@
 import _ from 'lodash';
-import {createConstant, createPlainAction, handleStandardAdd, handleStandardRemove, handleStandardReceive} from './../utils';
-import * as globalErrorsActions from './globalErrors';
-
-export const constants = createConstant('ADD_INSTALL', 'REMOVE_INSTALL', 'RECEIVE_INSTALLS', 'SET_ACTIVE_INSTALL');
+import {createPlainAction} from './../../utils';
+import * as globalErrorsActions from './../globalErrors';
+import constants from './dwarfFortressInstallsConstants';
 
 export function addInstall(install) {
 	return async function addInstallThunk(dispatch, getState, {database}) {
@@ -63,43 +62,3 @@ export function setActiveInstall(installId) {
 	};
 }
 
-const initialState = {
-	installsById: {},
-	installs: [],
-	activeInstallId: undefined
-};
-
-const resourceName = 'installs';
-
-export default function installsReducer(state = initialState, action) {
-	switch (action.type) {
-		case constants.ADD_INSTALL:
-			if (action.payload.install) {
-				return handleStandardAdd({state, id: action.payload.install.id, resource: action.payload.install, resourceName});
-			}
-
-			return state;
-		case constants.REMOVE_INSTALL:
-			if (_.has(action, 'payload.installId')) {
-				return handleStandardRemove({state, id: action.payload.installId, resourceName});
-			}
-
-			return state;
-		case constants.RECEIVE_INSTALLS:
-			if (_.isArray(action.payload.installs)) {
-				return handleStandardReceive({state, idProp: 'id', resources: action.payload.installs, resourceName});
-			}
-
-			return state;
-		case constants.SET_ACTIVE_INSTALL:
-			if (_.has(action, 'payload.installId')) {
-				return _.assign({}, state, {
-					activeInstallId: action.payload.installId
-				});
-			}
-
-			return state;
-		default:
-			return state;
-	}
-}

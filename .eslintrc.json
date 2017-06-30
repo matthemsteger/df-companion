@@ -19,10 +19,11 @@
 		"max-len": 0,
 		"comma-dangle": [2, "never"],
 		"arrow-parens": [2, "always"],
+		"no-underscore-dangle": [2, {"allow": ["__"]}],
 		"react/jsx-indent": [2, "tab"],
 		"react/jsx-indent-props": [2, "tab"],
 		"react/jsx-filename-extension": [2, {"extensions": [".js", ".jsx"]}],
-		"react/forbid-prop-types": [2, {"forbid": ["any", "array"]}]
+		"react/forbid-prop-types": [2, {"forbid": ["any"]}]
 	},
 	"settings": {
 		"import/core-modules": ["electron", "df-tools"]

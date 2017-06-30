@@ -26,6 +26,16 @@ export default class Model extends ObjectionModel {
 		return super.$parseDatabaseJson(processedJson);
 	}
 
+	$beforeInsert() {
+		if (!this.created_at) {
+			new Date().toISOString();
+		}
+	}
+
+	$beforeUpdate() {
+		this.updated_at = new Date().toISOString();
+	}
+
 	update(json = {}) {
 		return this.$query().updateAndFetch(json);
 	}
@@ -46,7 +56,7 @@ export default class Model extends ObjectionModel {
 		return this.query().deleteById(id);
 	}
 
-	static getAll({eager = null}) {
+	static getAll({eager = null} = {}) {
 		let query = this.query();
 		if (eager) {
 			query = query.eager(eager);

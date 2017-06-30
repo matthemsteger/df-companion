@@ -1,0 +1,28 @@
+@import "~bulma/sass/utilities/initial-variables";
+
+@font-face {
+  font-family: 'PxPlus_IBM_VGA9';
+  src: url('PxPlus_IBM_VGA9.eot');
+  src: url('PxPlus_IBM_VGA9.woff2') format('woff2'),
+       url('PxPlus_IBM_VGA9.woff') format('woff'),
+       url('PxPlus_IBM_VGA9.ttf') format('truetype'),
+       url('PxPlus_IBM_VGA9.svg#PxPlus_IBM_VGA9') format('svg'),
+       url('PxPlus_IBM_VGA9.eot?#iefix') format('embedded-opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+$family-sans-serif: 'PxPlus_IBM_VGA9';
+$family-monospace: 'PxPlus_IBM_VGA9';
+
+$black: #070707;
+$blue: #0063b1;
+$green: #559955;
+$turquoise: #4d9ea1;
+$red: #bb2222;
+$purple: #aa3377;
+$yellow: #ffff66;
+$orange: #8c7564;
+$white: #fffae8;
+
+@import "~bulma";

@@ -10,7 +10,9 @@ function createOnsaveHandler(history) {
 
 export default function FirstRun({history}) {
 	return (
-		<FirstDwarfFortressInstall onSave={createOnsaveHandler(history)} />
+		<div>
+			<FirstDwarfFortressInstall onSave={createOnsaveHandler(history)} />
+		</div>
 	);
 }
 

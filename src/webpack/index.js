@@ -11,7 +11,8 @@ export default async function webpackConfiguration() {
 	return {
 		target: 'electron-renderer',
 		entry: [
-			'react-hot-loader/patch',
+			'babel-polyfill',
+			// 'react-hot-loader/patch',
 			`webpack-dev-server/client?http://localhost:${port}`,
 			'webpack/hot/only-dev-server',
 			path.join(__dirname, '../app/index.js')
@@ -30,6 +31,20 @@ export default async function webpackConfiguration() {
 						'babel-loader'
 					],
 					exclude: /node_modules/
+				},
+				{
+					test: /\.scss$/,
+					use: [
+						{loader: 'style-loader'},
+						{loader: 'css-loader'},
+						{loader: 'sass-loader'}
+					]
+				},
+				{
+					test: /\.(eot|svg|ttf|woff|woff2)$/,
+					use: [
+						{loader: 'file-loader'}
+					]
 				}
 			]
 		},

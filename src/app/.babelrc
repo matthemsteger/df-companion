@@ -2,7 +2,7 @@
 	"presets": [
 		["env", {
 			"targets": {
-				"electron": 1.6
+				"electron": "1.6.10"
 			},
 			"useBuiltIns": true,
 			"modules": false
@@ -11,6 +11,6 @@
 	],
 	"plugins": [
 		"transform-class-properties",
-		"react-hot-loader/babel"
+		"transform-object-rest-spread"
 	]
 }

@@ -15,7 +15,8 @@ export default class Database {
 
 		this.knex = knexFactory({
 			client,
-			connection
+			connection,
+			useNullAsDefault: true
 		});
 
 		this.model = model;
