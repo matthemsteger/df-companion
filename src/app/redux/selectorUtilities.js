@@ -10,7 +10,13 @@ export function createStandardAllSelectorOld(resourceName, reducer, Model) {
 	};
 }
 
-export const localize = R.curry(R.memoize((reducer, state) => {
+const localizeMemoizeCacheCreator = (reducer, {reducerToModelMap}) =>
+	R.compose(
+		R.prop('path'),
+		reducerToModelMap.get
+	)(reducer);
+
+export const localize = R.curry(R.memoizeWith(localizeMemoizeCacheCreator, (reducer, state) => {
 	const {reducerToModelMap} = state;
 	const {path} = reducerToModelMap.get(reducer);
 
@@ -42,11 +48,10 @@ export function createLocalizeSelector(reducer) {
 	};
 }
 
-export const createStandardAllSelector = R.curry((resourceName, Model, localizedSelector) =>
+export const createStandardAllSelector = R.curry((resourceName, localizedSelector) =>
 	createSelector(
-		(state) => state,
 		localizedSelector,
-		(state, localizedState) => R.map((resource) => new Model({state, ...resource}), R.values(R.prop(`${resourceName}ById`, localizedState)))
+		(localizedState) => R.values(R.prop(`${resourceName}ById`, localizedState))
 	)
 );
 
@@ -98,12 +103,7 @@ export const bindSelectors = R.curry((selectorsMap, state) => {
 
 	return R.compose(
 		R.fromPairs,
-		R.map(
-			R.over(
-				R.lensIndex(1),
-				R.flip(R.call)(state)
-			)
-		),
+		R.map(R.over(R.lensIndex(1), R.applyTo(state))),
 		R.toPairs
 	)(selectorsMap);
 });

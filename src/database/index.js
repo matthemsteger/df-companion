@@ -1,38 +1,19 @@
-import knexFactory from 'knex';
-import {Model} from 'objection';
-import path from 'path';
-import * as model from './model';
+import PouchDB from 'pouchdb';
+import levelDBPlugin from 'pouchdb-adapter-leveldb';
+import pouchDBFindPlugin from 'pouchdb-find';
+import R from 'ramda';
+import * as models from './model';
 
-export default class Database {
-	constructor({client = 'sqlite3', connection} = {}) {
-		this.client = client;
+PouchDB.plugin(pouchDBFindPlugin);
+PouchDB.plugin(levelDBPlugin);
 
-		if (!connection) {
-			throw new Error('Cannot create database without connection');
-		}
+export default function createDatabase({path}) {
+	const database = new PouchDB(path, {adapter: 'leveldb'});
 
-		this.connection = connection;
+	const databaseModels = R.map((model) => model(database), models);
 
-		this.knex = knexFactory({
-			client,
-			connection,
-			useNullAsDefault: true
-		});
-
-		this.model = model;
-
-		Model.knex(this.knex);
-	}
-
-	async migrate() {
-		return this.knex.migrate.latest({
-			directory: path.resolve(__dirname, './migrations')
-		});
-	}
-
-	async getMigrationVersion() {
-		return this.knex.migrate.currentVersion({
-			directory: path.resolve(__dirname, './migrations')
-		});
-	}
+	return {
+		db: database,
+		...databaseModels
+	};
 }

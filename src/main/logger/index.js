@@ -40,7 +40,6 @@ const logger = _.reduce(logLevels, (accumulator, level) =>
 	_.assign(accumulator, {[level]: (message, ...args) => {
 		const formattedMessage = formatMessage(message, ...args);
 		log[level](formattedMessage);
-	}})
-, {});
+	}}), {});
 
 export default logger;

@@ -4,10 +4,35 @@ import R from 'ramda';
 export const makeErrorSerializable = R.pick(['message', 'name', 'stack', 'code', 'signal']);
 
 export function createConstant(...constants) {
-	const flattened = _.flatten(constants);
-	return _.reduce(flattened, (obj, key) =>
-		_.defaults(obj, {[key]: key})
-	, {});
+	const flattened = R.flatten(constants);
+	return _.reduce(
+		flattened, (obj, key) =>
+			_.defaults(obj, {[key]: key})
+		, {}
+	);
+}
+
+export function createLifecycleConstants(constant) {
+	return R.compose(
+		R.map(R.toUpper),
+		R.append(constant),
+		R.map((lifecycle) => `${constant}_${lifecycle}`)
+	)([
+		'PENDING',
+		'DONE',
+		'PROGRESS'
+	]);
+}
+
+export function crudConstants(resource) {
+	const upperResource = R.toUpper(resource);
+	return [
+		`CREATE_${upperResource}`,
+		`READ_${upperResource}`,
+		`DELETE_${upperResource}`,
+		`UPDATE_${upperResource}`,
+		`LIST_${upperResource}`
+	];
 }
 
 export function createPlainAction(actionType, payload) {
@@ -17,6 +42,42 @@ export function createPlainAction(actionType, payload) {
 	};
 }
 
+export function createActionCreator(actionType) {
+	return function actionCreator(payload, isError) {
+		return {
+			type: actionType,
+			payload,
+			error: !!isError
+		};
+	};
+}
+
+export const errorToAction = R.curry((actionCreator, error) =>
+	actionCreator(error, true));
+
+export const actionIsErrored = R.propEq('error', true);
+
+export function sendActionToWorker(action) {
+	const {type, ...actionProps} = action;
+	if (type.startsWith('WORKER_')) return action;
+
+	return {
+		type: `WORKER_${type}`,
+		...actionProps
+	};
+}
+
+export const addResourceToMap = R.curry(({mapKey, idSelector = R.prop('id'), payloadSelector = R.identity}, action, state) => {
+	const {payload} = action;
+	const resource = payloadSelector(payload);
+	if (!resource) return state;
+
+	const id = idSelector(resource);
+	return R.evolve({
+		[mapKey]: R.merge(R.__, R.objOf(id, resource))
+	})(state);
+});
+
 // export function handleStandardAdd({state, id, resource, resourceName}) {
 // 	const byIdProp = `${resourceName}ById`;
 // 	return _.assign({}, state, {
@@ -25,7 +86,25 @@ export function createPlainAction(actionType, payload) {
 // 	});
 // }
 
-export const handleStandardAdd = R.curry(({resourceName, idSelector = R.prop('id'), payloadSelector}, payload, state) => {
+export const handleStandardError = R.curry(({resourceName, payloadSelector = R.identity, clearOnSuccess = true}, action, state) => {
+	const {payload, error} = action;
+	if (!error) {
+		if (!clearOnSuccess) return state;
+
+		return R.evolve({
+			[`${resourceName}Error`]: null
+		})(state);
+	}
+
+	return R.evolve({
+		[`${resourceName}Error`]: makeErrorSerializable(payloadSelector(payload))
+	})(state);
+});
+
+export const handleStandardAdd = R.curry(({resourceName, idSelector = R.prop('id'), payloadSelector = R.identity}, action, state) => {
+	const {payload, error} = action;
+	if (error) return state;
+
 	const resource = payloadSelector(payload);
 	if (!resource) return state;
 
@@ -44,7 +123,10 @@ export const handleStandardAdd = R.curry(({resourceName, idSelector = R.prop('id
 // 	});
 // }
 
-export const handleStandardRemove = R.curry(({resourceName, payloadSelector = R.prop('id')}, payload, state) => {
+export const handleStandardRemove = R.curry(({resourceName, payloadSelector = R.prop('id')}, action, state) => {
+	const {payload, error} = action;
+	if (error) return state;
+
 	const id = payloadSelector(payload);
 	return R.evolve({
 		[`${resourceName}ById`]: R.omit([id]),
@@ -60,7 +142,10 @@ export const handleStandardRemove = R.curry(({resourceName, payloadSelector = R.
 // 	});
 // }
 
-export const handleStandardReceive = R.curry(({resourceName, idSelector = R.prop('id'), payloadSelector}, payload, state) => {
+export const handleStandardReceive = R.curry(({resourceName, idSelector = R.prop('id'), payloadSelector = R.identity}, action, state) => {
+	const {payload, error} = action;
+	if (error) return state;
+
 	const resources = payloadSelector(payload);
 	if (!_.isArray(resources)) return state;
 
@@ -70,11 +155,20 @@ export const handleStandardReceive = R.curry(({resourceName, idSelector = R.prop
 	})(state);
 });
 
-const fnReducer = R.curry((payload, memo, fn) => fn(payload)(memo));
+const reducerFuncWhenErrorIs = R.curry((errorPred, fn, action, state) => {
+	const {error} = action;
+	if (!errorPred(error)) return state;
+
+	return fn(action, state);
+});
+
+export const reducerFuncWhenError = reducerFuncWhenErrorIs(R.equals(true));
+export const reducerFuncWhenNoError = reducerFuncWhenErrorIs(R.not);
+
+const fnReducer = R.curry((action, state, fn) => fn(action)(state));
 const createPayloadReducer = R.curry((fn, action, state) => {
-	const {payload} = action;
 	const fns = R.unless(_.isArray, R.of)(fn);
-	return R.reduce(fnReducer(payload), state, fns);
+	return R.reduce(fnReducer(action), state, fns);
 });
 
 export const createReducer = R.curry((initialState, spec, state, action = {}) => {
@@ -88,3 +182,5 @@ export const createReducer = R.curry((initialState, spec, state, action = {}) =>
 		))
 	)(spec)(action)(stateToPass);
 });
+
+export const createCompositeIdSelector = R.curry((props, obj) => R.compose(R.join('_'), R.sort(R.ascend(R.identity)), R.values, R.pick(props))(obj));

@@ -7,30 +7,56 @@ import {dependencies as externals} from './../../package.json';
 const {PORT: port, START_HOT: startHot} = process.env;
 const publicPath = `http://localhost:${port}/`;
 
-export default async function webpackConfiguration() {
-	return {
+export default [
+	{
+		mode: 'none',
 		target: 'electron-renderer',
-		entry: [
-			'babel-polyfill',
-			// 'react-hot-loader/patch',
-			`webpack-dev-server/client?http://localhost:${port}`,
-			'webpack/hot/only-dev-server',
-			path.join(__dirname, '../app/index.js')
-		],
+		entry: {
+			bundle: [
+				'babel-polyfill',
+				// 'react-hot-loader/patch',
+				`webpack-dev-server/client?http://localhost:${port}`,
+				'webpack/hot/only-dev-server',
+				path.join(__dirname, '../app/index.js')
+			]
+		},
 		output: {
-			filename: 'bundle.js',
+			filename: '[name].js',
 			path: path.resolve(__dirname, '../../build'),
 			publicPath
 		},
 		devtool: 'inline-source-map',
+		resolve: {
+			extensions: ['*', '.js', '.jsx', '.json']
+		},
 		module: {
 			rules: [
 				{
 					test: /\.jsx?$/,
 					use: [
-						'babel-loader'
+						{
+							loader: 'babel-loader',
+							options: {
+								presets: [
+									[
+										'env',
+										{
+											targets: {electron: '1.6.10'},
+											useBuiltIns: true,
+											modules: false
+										}
+									],
+									'react'
+								],
+								plugins: [
+									'transform-class-properties',
+									'transform-object-rest-spread'
+								],
+								babelrc: false
+							}
+						}
 					],
-					exclude: /node_modules/
+					exclude: [/node_modules/, /df-tools/, /formik/]
 				},
 				{
 					test: /\.scss$/,
@@ -41,9 +67,21 @@ export default async function webpackConfiguration() {
 					]
 				},
 				{
-					test: /\.(eot|svg|ttf|woff|woff2)$/,
+					test: /\.(eot|ttf|woff|woff2)$/,
+					use: [{loader: 'file-loader'}]
+				},
+				{
+					test: /\.svg$/,
 					use: [
-						{loader: 'file-loader'}
+						{
+							loader: 'babel-loader'
+						},
+						{
+							loader: 'react-svg-loader',
+							options: {
+								jsx: true
+							}
+						}
 					]
 				}
 			]
@@ -64,13 +102,17 @@ export default async function webpackConfiguration() {
 				verbose: true,
 				disableDotRule: false
 			},
-			setup() {
+			before() {
 				if (startHot) {
-					spawn('npm', ['run', 'start-dev-electron'], {shell: true, env: process.env, stdio: 'inherit'})
+					spawn('npm', ['run', 'start-dev-electron'], {
+						shell: true,
+						env: process.env,
+						stdio: 'inherit'
+					})
 						.on('close', (code) => process.exit(code))
 						.on('error', (err) => console.error(err)); // eslint-disable-line no-console
 				}
 			}
 		}
-	};
-}
+	}
+];

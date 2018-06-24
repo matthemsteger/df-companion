@@ -2,10 +2,13 @@
 	"presets": [
 		["env", {
 			"targets": {
-				"node": "7.6"
+				"node": "7.9"
 			},
 			"useBuiltIns": true
 		}]
 	],
-	"plugins": ["transform-class-properties"]
+	"plugins": [
+		"transform-class-properties",
+		"transform-object-rest-spread"
+	]
 }

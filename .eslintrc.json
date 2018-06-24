@@ -11,6 +11,7 @@
 		"react"
 	],
 	"rules": {
+		"linebreak-style": 0,
 		"semi": [2, "always"],
 		"no-tabs": 0,
 		"indent": [2, "tab", {"SwitchCase": 1}],
@@ -20,10 +21,13 @@
 		"comma-dangle": [2, "never"],
 		"arrow-parens": [2, "always"],
 		"no-underscore-dangle": [2, {"allow": ["__"]}],
+		"object-curly-newline": [2, {"multiline": true, "consistent": true}],
 		"react/jsx-indent": [2, "tab"],
 		"react/jsx-indent-props": [2, "tab"],
 		"react/jsx-filename-extension": [2, {"extensions": [".js", ".jsx"]}],
-		"react/forbid-prop-types": [2, {"forbid": ["any"]}]
+		"react/forbid-prop-types": [2, {"forbid": ["any"]}],
+		"jsx-a11y/label-has-for": 0,
+		"jsx-a11y/anchor-is-valid": [2, {"components": ["a"]}]
 	},
 	"settings": {
 		"import/core-modules": ["electron", "df-tools"]

@@ -1,3 +1,13 @@
+import yup from 'yup';
+import baseModel from './baseModel';
+
+const schema = yup.object({
+	installId: yup.string().required()
+});
+
+export default baseModel('dwarfFortressActiveInstall', schema);
+
+/*
 import Model from './baseModel';
 
 export default class DwarfFortressActiveInstall extends Model {
@@ -30,3 +40,4 @@ export default class DwarfFortressActiveInstall extends Model {
 		}
 	}
 }
+*/

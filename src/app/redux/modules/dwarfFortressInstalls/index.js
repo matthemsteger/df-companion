@@ -1,5 +1,8 @@
-export {default} from './dwarfFortressInstallsReducer';
+import * as epics from './epics';
+
+export {default} from './reducer';
 export {default as DwarfFortressInstall} from './dwarfFortressInstall';
-export {default as constants} from './dwarfFortressInstallsConstants';
-export * from './dwarfFortressInstallsActions';
+export {default as constants} from './constants';
+export * from './actionCreators';
 export * from './selectors';
+export {epics};

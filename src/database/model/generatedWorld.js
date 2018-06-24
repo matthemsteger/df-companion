@@ -1,3 +1,14 @@
+import yup from 'yup';
+import docuri from 'docuri';
+import baseModel from './baseModel';
+
+const schema = yup.object();
+
+const idgen = docuri.route('df-install/:dwarfFortressInstallId/generated-world/:id');
+
+export default baseModel('dwarfFortressInstall', schema);
+
+/*
 import Model from './baseModel';
 import DwarfFortressInstall from './dwarfFortressInstall';
 
@@ -16,3 +27,4 @@ export default class GeneratedWorld extends Model {
 		}
 	}
 }
+*/

@@ -1,3 +1,9 @@
+import baseModel from './baseModel';
+import schema from './../schemas/dwarfFortressInstall';
+
+export default baseModel('dwarfFortressInstall', schema);
+
+/*
 import Model from './baseModel';
 import DwarfFortressActiveInstall from './dwarfFortressActiveInstall';
 
@@ -20,3 +26,9 @@ export default class DwarfFortressInstall extends Model {
 		return DwarfFortressActiveInstall.setActiveInstall(installId, {transaction, transacting});
 	}
 }
+*/
+
+// really we can have a function that builds on an object
+// one is a validator
+
+// decouple the local id to the data, use shortid

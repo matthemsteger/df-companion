@@ -1,9 +1,14 @@
-import HomePage from './pages/home';
-import FirstRunPage from './pages/firstRun';
-import SideNavigation from './containers/sideNavigation';
-import WorldGenHome, {GenNewWorldPage} from './pages/worldgen';
+import {ROUTE_HOME, ROUTE_FIRST_RUN, ROUTE_WORLDS} from './redux/modules/routing';
 
-export default function buildRoutes() {
+// NOT USED!
+export default {
+	[ROUTE_HOME]: '/',
+	[ROUTE_FIRST_RUN]: '/first-run',
+	[ROUTE_WORLDS]: '/worlds/:id'
+};
+
+/*
+export function buildRoutes() {
 	return [
 		{
 			path: '/',
@@ -29,3 +34,4 @@ export default function buildRoutes() {
 		}
 	];
 }
+*/

@@ -4,8 +4,7 @@
 			"targets": {
 				"electron": "1.6.10"
 			},
-			"useBuiltIns": true,
-			"modules": false
+			"useBuiltIns": true
 		}],
 		"react"
 	],
