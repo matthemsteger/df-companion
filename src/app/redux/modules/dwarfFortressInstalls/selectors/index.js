@@ -1,13 +1,25 @@
-import R from 'ramda';
-import {memoizedFindFactory, createSelector, createStandardAllSelectors} from './../../../selectorUtilities';
-import DwarfFortressInstall from './../dwarfFortressInstall';
+import {prop} from 'ramda';
+import {
+	memoizedFindFactory,
+	createSelector,
+	createStandardAllSelector
+} from '@matthemsteger/redux-utils-fn-selectors';
 import selectLocalState from './selectLocalState';
 
 export {selectLocalState};
 export {default as selectActiveInstallId} from './selectActiveInstallId';
-const {selectInstallsRaw: selectInstalls} = createStandardAllSelectors(selectLocalState, ['installs', DwarfFortressInstall]);
+const selectInstalls = createStandardAllSelector(selectLocalState, 'installs');
 export {selectInstalls};
-export const selectInstallById = createSelector(selectInstalls, memoizedFindFactory('id'));
-export const selectCreateInstallPending = createSelector(selectLocalState, R.prop('createInstallPending'));
-export const selectTimesInstallsFetched = createSelector(selectLocalState, R.prop('timesInstallsFetched'));
+export const selectInstallById = createSelector(
+	selectInstalls,
+	memoizedFindFactory('id')
+);
+export const selectCreateInstallPending = createSelector(
+	selectLocalState,
+	prop('createInstallPending')
+);
+export const selectTimesInstallsFetched = createSelector(
+	selectLocalState,
+	prop('timesInstallsFetched')
+);
 export * from './checkedPaths';

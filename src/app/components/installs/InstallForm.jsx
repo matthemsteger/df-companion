@@ -1,19 +1,31 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
-import {Formik} from '@mattvt3/formik';
+import {withFormik} from 'formik';
 import R from 'ramda';
 import schema from './../../../database/schemas/dwarfFortressInstall';
 import InstallFormFields from './InstallFormFields';
 import Button from './../Button';
 
-export default class InstallForm extends Component {
+class InstallForm extends Component {
 	static propTypes = {
 		children: PropTypes.node,
 		buttonText: PropTypes.string,
-		submitAction: PropTypes.func.isRequired,
+		submitAction: PropTypes.func.isRequired, // eslint-disable-line react/no-unused-prop-types
 		checkInstallPath: PropTypes.func.isRequired,
 		actionPending: PropTypes.bool.isRequired,
-		checkedPaths: PropTypes.array
+		checkedPaths: PropTypes.array,
+		isSubmitting: PropTypes.bool.isRequired,
+		setSubmitting: PropTypes.func.isRequired,
+		values: PropTypes.shape({
+			name: PropTypes.string.isRequired,
+			path: PropTypes.string.isRequired,
+			version: PropTypes.string.isRequired
+		}).isRequired,
+		setFieldValue: PropTypes.func.isRequired,
+		handleSubmit: PropTypes.func.isRequired,
+		errors: PropTypes.object.isRequired,
+		handleChange: PropTypes.func.isRequired,
+		isValid: PropTypes.bool.isRequired
 	};
 
 	static defaultProps = {
@@ -22,42 +34,25 @@ export default class InstallForm extends Component {
 		checkedPaths: []
 	};
 
-	state = {
-		isSubmitting: false
-	}
+	componentDidUpdate(prevProps) {
+		const {
+			actionPending,
+			isSubmitting,
+			setSubmitting,
+			checkedPaths,
+			values,
+			setFieldValue
+		} = this.props;
+		const {actionPending: prevActionPending} = prevProps;
 
-	componentWillReceiveProps(nextProps) {
-		const {actionPending} = nextProps;
-		const {isSubmitting} = this.state;
-
-		if (actionPending !== isSubmitting) {
-			this.setState({isSubmitting: actionPending});
+		if (
+			actionPending !== prevActionPending &&
+			actionPending !== isSubmitting
+		) {
+			setSubmitting(actionPending);
 		}
-	}
 
-	onSubmit = (values) => {
-		const {submitAction} = this.props;
-		submitAction(R.pick(['name', 'path', 'version'], values));
-		this.setState({isSubmitting: true});
-	}
-
-	onChange = (handleChange, e) => {
-		if (e.persist) e.persist();
-
-		const {checkInstallPath} = this.props;
-		const {name, value} = e.target;
-
-		handleChange(e);
-
-		if (name === 'path') {
-			checkInstallPath(value);
-		}
-	}
-
-	onReinitialize = (values, formikActions) => {
-		const {checkedPaths} = this.props;
 		const {path, version} = values;
-		const {setFieldValue} = formikActions;
 
 		const matchedPath = R.find(R.propEq('path', path), checkedPaths);
 		if (matchedPath && version !== matchedPath.version) {
@@ -65,48 +60,58 @@ export default class InstallForm extends Component {
 		}
 	}
 
+	onChange = (e) => {
+		if (e.persist) e.persist();
+
+		const {checkInstallPath, handleChange} = this.props;
+		const {name, value} = e.target;
+
+		handleChange(e);
+
+		if (name === 'path') {
+			checkInstallPath(value);
+		}
+	};
+
 	render() {
-		const {children, buttonText, checkedPaths} = this.props;
-		const {isSubmitting} = this.state;
-		const initalValues = {
-			name: '',
-			path: '',
-			version: '',
-			checkedPaths
-		};
+		const {
+			children,
+			handleSubmit,
+			errors,
+			values,
+			isSubmitting,
+			isValid,
+			buttonText
+		} = this.props;
 
 		return (
-			<Formik
-				onSubmit={this.onSubmit}
-				initialValues={initalValues}
-				validationSchema={schema}
-				enableReinitialize
-				onReinitialize={this.onReinitialize}
-			>
-				{(formikProps) => {
-					const {
-						values,
-						errors,
-						handleSubmit,
-						handleChange,
-						isValid
-					} = formikProps;
-
-					return (
-						<form onSubmit={handleSubmit}>
-							{children}
-							<InstallFormFields
-								errors={errors}
-								values={values}
-								onChange={R.partial(this.onChange, [handleChange])}
-							/>
-							<Button type="submit" disabled={isSubmitting && isValid}>
-								{buttonText}
-							</Button>
-						</form>
-					);
-				}}
-			</Formik>
+			<form onSubmit={handleSubmit}>
+				{children}
+				<InstallFormFields
+					errors={errors}
+					values={values}
+					onChange={this.onChange}
+				/>
+				<Button type="submit" disabled={isSubmitting && isValid}>
+					{buttonText}
+				</Button>
+			</form>
 		);
 	}
 }
+
+export default withFormik({
+	handleSubmit(values, {props, setSubmitting}) {
+		const {submitAction} = props;
+		submitAction(R.pick(['name', 'path', 'version'], values));
+		setSubmitting(true);
+	},
+	mapPropsToValues() {
+		return {
+			name: '',
+			path: '',
+			version: ''
+		};
+	},
+	validationSchema: schema
+})(InstallForm);

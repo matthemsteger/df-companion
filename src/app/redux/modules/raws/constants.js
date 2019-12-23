@@ -1,4 +1,10 @@
-import R from 'ramda';
-import {createConstant, createLifecycleConstants, crudConstants} from './../../utils';
+import {map} from 'ramda';
+import {
+	createConstantMap,
+	createLifecycleConstants,
+	crudConstants
+} from '@matthemsteger/redux-utils-fn-constants';
 
-export default createConstant(R.map(createLifecycleConstants, [...crudConstants('MODELED_RAW_FILE')]));
+export default createConstantMap(
+	map(createLifecycleConstants, [...crudConstants('MODELED_RAW_FILE')])
+);

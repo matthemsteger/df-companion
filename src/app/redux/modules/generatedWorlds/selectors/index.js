@@ -1,43 +1,43 @@
-import {memoizedFindFactory, memoizedFilterFactory, createSelector, createLocalizeSelector, createStandardAllSelectors} from './../../../selectorUtilities';
+import {map} from 'ramda';
+import {
+	memoizedFindFactory,
+	memoizedFilterFactory,
+	createSelector,
+	createStandardAllSelector,
+	createLocalizedSelector
+} from '@matthemsteger/redux-utils-fn-selectors';
 import reducer from './../reducer';
-import GeneratedWorld from './../generatedWorld';
-import PendingGeneratedWorld from './../pendingGeneratedWorld';
-import ErroredGeneratedWorld from './../erroredGeneratedWorld';
-import WorldSitesAndPops from './../worldSitesAndPops';
 
-const selectLocalState = createLocalizeSelector(reducer);
+const selectLocalState = createLocalizedSelector(reducer);
 
-// get rid of non-raw and let consumers handle links
-
-const {
+const [
 	selectGeneratedWorlds,
-	selectGeneratedWorldsRaw,
 	selectPendingGeneratedWorlds,
-	selectPendingGeneratedWorldsRaw,
 	selectErroredGeneratedWorlds,
-	selectErroredGeneratedWorldsRaw,
-	selectWorldSitesAndPops,
-	selectWorldSitesAndPopsRaw
-} = createStandardAllSelectors(
-	selectLocalState,
-	['generatedWorlds', GeneratedWorld],
-	['pendingGeneratedWorlds', PendingGeneratedWorld],
-	['erroredGeneratedWorlds', ErroredGeneratedWorld],
-	['worldSitesAndPops', WorldSitesAndPops]
-);
+	selectWorldSitesAndPops
+] = map(createStandardAllSelector(selectLocalState), [
+	'generatedWorlds',
+	'pendingGeneratedWorlds',
+	'erroredGeneratedWorlds',
+	'worldSitesAndPops'
+]);
 
 export {
 	selectGeneratedWorlds,
-	selectGeneratedWorldsRaw,
 	selectPendingGeneratedWorlds,
-	selectPendingGeneratedWorldsRaw,
 	selectErroredGeneratedWorlds,
-	selectErroredGeneratedWorldsRaw,
-	selectWorldSitesAndPops,
-	selectWorldSitesAndPopsRaw
+	selectWorldSitesAndPops
 };
 
-
-export const selectGeneratedWorldById = createSelector(selectGeneratedWorlds, memoizedFindFactory('id'));
-export const selectGeneratedWorldsByInstallId = createSelector(selectGeneratedWorlds, memoizedFilterFactory('dwarfFortressInstallId'));
-export const selectWorldSitesAndPopById = createSelector(selectWorldSitesAndPops, memoizedFindFactory('id'));
+export const selectGeneratedWorldById = createSelector(
+	selectGeneratedWorlds,
+	memoizedFindFactory('id')
+);
+export const selectGeneratedWorldsByInstallId = createSelector(
+	selectGeneratedWorlds,
+	memoizedFilterFactory('dwarfFortressInstallId')
+);
+export const selectWorldSitesAndPopById = createSelector(
+	selectWorldSitesAndPops,
+	memoizedFindFactory('id')
+);

@@ -1,14 +1,26 @@
-import _ from 'lodash';
-import R from 'ramda';
-import {createConstant, createPlainAction, makeErrorSerializable} from './../utils';
+import {
+	map,
+	ifElse,
+	identity,
+	of as arrayOf,
+	compose,
+	without,
+	concat,
+	curry,
+	path
+} from 'ramda';
+import {createConstantMap} from '@matthemsteger/redux-utils-fn-constants';
+import {createPlainAction} from '@matthemsteger/redux-utils-fn-actions';
+import {createReducer} from '@matthemsteger/redux-utils-fn-reducers';
+import {makeErrorSerializable} from './../utils';
 
-export const constants = createConstant('ADD_ERRORS', 'REMOVE_ERROR');
+export const constants = createConstantMap('ADD_ERRORS', 'REMOVE_ERROR');
 
-const makeArray = R.ifElse(_.isArray, R.identity, R.of);
+const makeArray = ifElse(Array.isArray, identity, arrayOf);
 
 export function addErrors(errors) {
-	const errorsToAdd = R.compose(
-		R.map(makeErrorSerializable),
+	const errorsToAdd = compose(
+		map(makeErrorSerializable),
 		makeArray
 	)(errors);
 
@@ -19,13 +31,26 @@ export function removeError(error) {
 	return createPlainAction(constants.REMOVE_ERROR, {error});
 }
 
-export default function globalErrorsReducer(state = [], action) {
-	switch (action.type) {
-		case constants.ADD_ERRORS:
-			return [...state, ...action.payload.errors];
-		case constants.REMOVE_ERROR:
-			return _.without(state, action.payload.error);
-		default:
-			return state;
-	}
-}
+const initialState = [];
+export default createReducer(initialState, [
+	[
+		constants.ADD_ERRORS,
+		curry((action, state) =>
+			compose(
+				concat(state),
+				path(['payload', 'errors'])
+			)(action)
+		)
+	],
+	[
+		constants.REMOVE_ERROR,
+		curry((action, state) =>
+			without(
+				compose(
+					arrayOf,
+					path(['payload', 'error'])
+				)(action)
+			)(state)
+		)
+	]
+]);

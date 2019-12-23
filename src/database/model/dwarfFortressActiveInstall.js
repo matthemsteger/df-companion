@@ -1,4 +1,4 @@
-import yup from 'yup';
+import * as yup from 'yup';
 import baseModel from './baseModel';
 
 const schema = yup.object({

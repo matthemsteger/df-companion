@@ -1,4 +1,4 @@
-import {createLocalizeSelector} from './../../../selectorUtilities';
+import {createLocalizedSelector} from '@matthemsteger/redux-utils-fn-selectors';
 import reducer from './../reducer';
 
-export default createLocalizeSelector(reducer);
+export default createLocalizedSelector(reducer);

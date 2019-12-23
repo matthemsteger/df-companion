@@ -1,63 +1,102 @@
 import {selectArray} from 'redux-most';
 import {from as streamFrom, join as joinStream} from 'most';
-import R from 'ramda';
+import {
+	__ as placeholder,
+	always,
+	assoc,
+	both,
+	compose,
+	contains,
+	curry,
+	equals,
+	identity,
+	ifElse,
+	is,
+	isNil,
+	map,
+	of as arrayOf,
+	prop,
+	propIs,
+	reject,
+	unless
+} from 'ramda';
 import dfTools from 'df-tools';
 import Maybe from 'folktale/maybe';
-import {of as futureOf, parallel, fold as foldFuture, encase as encaseFuture} from 'fluture';
-import {fs} from './../../../../common/utils/fs';
+import {of as futureOf, parallel, fold as foldFuture} from 'fluture';
+import {errorToAction} from '@matthemsteger/redux-utils-fn-actions';
+import {readJSONFile} from './../../../../common/utils/fs';
 import {constants as rawFilesConstants} from './../rawFiles';
 import {finishCreateModeledRawFile} from './actionCreators';
-import {errorToAction} from './../../utils';
-import {futureToStream, chainWithContext, foldMaybe, filterUnerroredActions} from './../../epicUtilities';
+import {
+	futureToStream,
+	chainWithContext,
+	foldMaybe,
+	filterUnerroredActions
+} from './../../epicUtilities';
 
-const readUtf8File = R.converge(fs.readFileFuture, [R.identity, R.always('utf8')]);
-const readJSONFile = R.compose(R.chain(encaseFuture(JSON.parse)), readUtf8File);
-
-const supportedRawFileTypes = [
-	dfTools.raws.rawFileTypes.CREATURE
-];
+const supportedRawFileTypes = [dfTools.raws.rawFileTypes.CREATURE];
 
 const maybeSupportedRawFileType = (rawFile) =>
-	R.compose(
-		R.ifElse(R.equals(true), R.always(Maybe.Just(rawFile)), R.always(Maybe.Nothing())),
-		R.both(
-			R.compose(R.contains(R.__, supportedRawFileTypes), R.prop('rawFileType')),
-			R.propIs(String, 'parsedCachePath')
+	compose(
+		ifElse(
+			equals(true),
+			always(Maybe.Just(rawFile)),
+			always(Maybe.Nothing())
+		),
+		both(
+			compose(
+				contains(placeholder, supportedRawFileTypes),
+				prop('rawFileType')
+			),
+			propIs(String, 'parsedCachePath')
 		)
 	)(rawFile);
 
-const modelCreature = R.curry((rawFile, creature) =>
-	R.compose(
-		R.assoc('rawFileId', R.prop('id', rawFile)),
-		R.assoc('installId', R.prop('installId', rawFile)),
-		R.assoc('rawFileType', R.prop('rawFileType', rawFile))
-	)(creature));
+const modelCreature = curry((rawFile, creature) =>
+	compose(
+		assoc('rawFileId', prop('id', rawFile)),
+		assoc('installId', prop('installId', rawFile)),
+		assoc('rawFileType', prop('rawFileType', rawFile))
+	)(creature)
+);
 
-const modelCreatureRaw = R.curry((rawFile, creatureRaw) =>
-	R.compose(
-		R.map(modelCreature(rawFile)),
+const modelCreatureRaw = curry((rawFile, creatureRaw) =>
+	compose(
+		map(modelCreature(rawFile)),
 		dfTools.raws.modelParsedCreatureRaw
-	)(creatureRaw));
+	)(creatureRaw)
+);
 
 const readAndModelRawFile = (rawFile) =>
-	R.compose(
-		foldMaybe(R.always(futureOf(null)), R.identity),
-		R.map(R.compose(R.map(modelCreatureRaw(rawFile)), readJSONFile, R.prop('parsedCachePath'))),
-		maybeSupportedRawFileType,
+	compose(
+		foldMaybe(always(futureOf(null)), identity),
+		map(
+			compose(
+				map(modelCreatureRaw(rawFile)),
+				readJSONFile,
+				prop('parsedCachePath')
+			)
+		),
+		maybeSupportedRawFileType
 	)(rawFile);
 
-export const modelRawFilesEpic = R.compose( // eslint-disable-line import/prefer-default-export
+// eslint-disable-next-line import/prefer-default-export
+export const modelRawFilesEpic = compose(
 	chainWithContext(({payload: singleOrArrayRawFiles}) =>
-		R.compose(
+		compose(
 			joinStream,
-			R.map(streamFrom),
+			map(streamFrom),
 			futureToStream,
-			foldFuture(errorToAction(finishCreateModeledRawFile), R.map(finishCreateModeledRawFile)),
-			R.map(R.reject(R.isNil)),
+			foldFuture(
+				errorToAction(finishCreateModeledRawFile),
+				map(finishCreateModeledRawFile)
+			),
+			map(reject(isNil)),
 			parallel(Number.POSITIVE_INFINITY),
-			R.map(readAndModelRawFile),
-			R.unless(R.is(Array), R.of),
-		)(singleOrArrayRawFiles)),
+			map(readAndModelRawFile),
+			unless(is(Array), arrayOf)
+		)(singleOrArrayRawFiles)
+	),
 	filterUnerroredActions,
 	selectArray([
 		rawFilesConstants.LIST_RAW_FILE_DONE,

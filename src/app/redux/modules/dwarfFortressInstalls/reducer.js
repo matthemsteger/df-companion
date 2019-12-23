@@ -1,5 +1,22 @@
-import R from 'ramda';
-import {handleStandardAdd, handleStandardRemove, handleStandardReceive, handleStandardError, createReducer} from './../../utils';
+import {
+	evolve,
+	identity,
+	curry,
+	when,
+	always,
+	not,
+	isNil,
+	prop,
+	path,
+	inc
+} from 'ramda';
+import {
+	handleStandardAdd,
+	handleStandardRemove,
+	handleStandardReceive,
+	handleStandardError,
+	createReducer
+} from '@matthemsteger/redux-utils-fn-reducers';
 import constants from './constants';
 
 const initialState = {
@@ -18,64 +35,85 @@ const resourceName = 'installs';
 const checkedPathsResourceName = 'checkedPaths';
 
 export default createReducer(initialState, [
-	[constants.CREATE_INSTALL, R.curry((action, state) =>
-		R.evolve({
-			createInstallPending: true
-		})(state)
-	)],
-	[constants.CREATE_INSTALL_DONE, [
-		handleStandardAdd({
-			resourceName
-		}),
-		handleStandardError({
-			resourceName
-		})
-	]],
-	[constants.REMOVE_INSTALL_DONE, [
-		handleStandardRemove({
-			resourceName,
-			payloadSelector: R.identity
-		}),
-		handleStandardError({
-			resourceName
-		})
-	]],
-	[constants.LIST_INSTALL_DONE, [
-		handleStandardReceive({
-			resourceName
-		}),
-		handleStandardError({
-			resourceName
-		}),
-		R.curry((action, state) =>
-			R.evolve({
-				timesInstallsFetched: R.inc
+	[
+		constants.CREATE_INSTALL,
+		curry((action, state) =>
+			evolve({
+				createInstallPending: true
 			})(state)
 		)
-	]],
-	[constants.SET_ACTIVE_INSTALL_DONE, R.curry(({payload}, state) =>
-		R.when(
-			R.always(R.not(R.isNil(payload))),
-			R.evolve({
-				activeInstallId: R.always(payload)
+	],
+	[
+		constants.CREATE_INSTALL_DONE,
+		[
+			handleStandardAdd({
+				resourceName
+			}),
+			handleStandardError({
+				resourceName
 			})
-		)(state)
-	)],
-	[constants.CHECK_PATH_DONE, [
-		handleStandardAdd({
-			resourceName: checkedPathsResourceName,
-			idSelector: R.prop('path')
-		})
-	]],
-	[constants.READ_ACTIVE_INSTALL_DONE, [
-		R.curry((action, state) => {
-			const activeInstallId = R.path(['payload', 'installId'], action);
-			return R.evolve({
-				activeInstallId: R.always(activeInstallId)
-			})(state);
-		}),
-		handleStandardError({
-			resourceName: 'activeInstall'
-		})
-	]]
+		]
+	],
+	[
+		constants.REMOVE_INSTALL_DONE,
+		[
+			handleStandardRemove({
+				resourceName,
+				payloadSelector: identity
+			}),
+			handleStandardError({
+				resourceName
+			})
+		]
+	],
+	[
+		constants.LIST_INSTALL_DONE,
+		[
+			handleStandardReceive({
+				resourceName
+			}),
+			handleStandardError({
+				resourceName
+			}),
+			curry((action, state) =>
+				evolve({
+					timesInstallsFetched: inc
+				})(state)
+			)
+		]
+	],
+	[
+		constants.SET_ACTIVE_INSTALL_DONE,
+		curry(({payload}, state) =>
+			when(
+				always(not(isNil(payload))),
+				evolve({
+					activeInstallId: always(payload)
+				})
+			)(state)
+		)
+	],
+	[
+		constants.CHECK_PATH_DONE,
+		[
+			handleStandardAdd({
+				resourceName: checkedPathsResourceName,
+				idSelector: prop('path')
+			})
+		]
+	],
+	[
+		constants.READ_ACTIVE_INSTALL_DONE,
+		[
+			curry((action, state) => {
+				const activeInstallId = path(['payload', 'installId'], action);
+				return evolve({
+					activeInstallId: always(activeInstallId)
+				})(state);
+			}),
+			handleStandardError({
+				resourceName: 'activeInstall'
+			})
+		]
+	]
 ]);

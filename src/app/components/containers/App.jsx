@@ -1,23 +1,23 @@
 import React from 'react';
-import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
-import {selectRouteType} from './../../redux/modules/routing';
-import PageSwitcher from './../pages';
+import {Provider} from 'react-redux';
+import {Provider as FelaProvider, ThemeProvider} from 'react-fela';
+import PageContainer from './PageContainer';
 
-function App(props) {
-	const {routeType} = props;
-
+export default function App({store, styleRenderer, theme}) {
 	return (
-		<div>
-			<PageSwitcher routeType={routeType} />
-		</div>
+		<Provider store={store}>
+			<FelaProvider renderer={styleRenderer}>
+				<ThemeProvider theme={theme}>
+					<PageContainer />
+				</ThemeProvider>
+			</FelaProvider>
+		</Provider>
 	);
 }
 
 App.propTypes = {
-	routeType: PropTypes.string.isRequired
+	store: PropTypes.object.isRequired,
+	styleRenderer: PropTypes.object.isRequired,
+	theme: PropTypes.object.isRequired
 };
-
-const mapStateToProps = (state) => ({routeType: selectRouteType(state)});
-
-export default connect(mapStateToProps)(App);

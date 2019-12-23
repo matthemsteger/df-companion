@@ -35,28 +35,10 @@ export default [
 					test: /\.jsx?$/,
 					use: [
 						{
-							loader: 'babel-loader',
-							options: {
-								presets: [
-									[
-										'env',
-										{
-											targets: {electron: '1.6.10'},
-											useBuiltIns: true,
-											modules: false
-										}
-									],
-									'react'
-								],
-								plugins: [
-									'transform-class-properties',
-									'transform-object-rest-spread'
-								],
-								babelrc: false
-							}
+							loader: 'babel-loader'
 						}
 					],
-					exclude: [/node_modules/, /df-tools/, /formik/]
+					exclude: [/node_modules/, /formik/]
 				},
 				{
 					test: /\.scss$/,

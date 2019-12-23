@@ -1,9 +1,13 @@
-import R from 'ramda';
-import {createConstant, createLifecycleConstants, crudConstants} from './../../utils';
+import {map} from 'ramda';
+import {
+	createConstantMap,
+	createLifecycleConstants,
+	crudConstants
+} from '@matthemsteger/redux-utils-fn-constants';
 
-export default createConstant(
-	R.map(createLifecycleConstants, crudConstants('INSTALL')),
+export default createConstantMap(
+	map(createLifecycleConstants, crudConstants('INSTALL')),
 	'SET_ACTIVE_INSTALL',
 	'SET_ACTIVE_INSTALL_DONE',
-	R.map(createLifecycleConstants, ['CHECK_PATH', 'READ_ACTIVE_INSTALL'])
+	map(createLifecycleConstants, ['CHECK_PATH', 'READ_ACTIVE_INSTALL'])
 );

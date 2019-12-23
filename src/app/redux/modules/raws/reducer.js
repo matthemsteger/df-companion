@@ -1,6 +1,12 @@
-import R from 'ramda';
+import {curry, compose, prop, head} from 'ramda';
 import dfTools from 'df-tools';
-import {handleStandardAdd, handleStandardRemove, handleStandardReceive, handleStandardError, createReducer, reducerFuncWhenNoError, createCompositeIdSelector} from './../../utils';
+import {
+	handleStandardReceive,
+	createReducer,
+	whenNoError,
+	reducerWithPredicate
+} from '@matthemsteger/redux-utils-fn-reducers';
+import {createCompositeIdSelector} from './../../utils';
 import constants from './constants';
 
 const {rawFileTypes} = dfTools.raws;
@@ -28,9 +34,12 @@ function determineResourceName(rawFileType) {
 	}
 }
 
-const createRawStandardReceive = R.curry((action, state) => {
+const createRawStandardReceive = curry((action, state) => {
 	const {payload: rawObjects} = action;
-	const rawFileType = R.compose(R.prop('rawFileType'), R.head)(rawObjects);
+	const rawFileType = compose(
+		prop('rawFileType'),
+		head
+	)(rawObjects);
 	if (!rawFileType) return state;
 
 	return handleStandardReceive({
@@ -40,7 +49,8 @@ const createRawStandardReceive = R.curry((action, state) => {
 });
 
 export default createReducer(initialState, [
-	[constants.CREATE_MODELED_RAW_FILE_DONE, [
-		reducerFuncWhenNoError(createRawStandardReceive)
-	]]
+	[
+		constants.CREATE_MODELED_RAW_FILE_DONE,
+		[reducerWithPredicate(whenNoError, createRawStandardReceive)]
+	]
 ]);

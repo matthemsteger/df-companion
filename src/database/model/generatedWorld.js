@@ -1,10 +1,12 @@
-import yup from 'yup';
+import * as yup from 'yup';
 import docuri from 'docuri';
 import baseModel from './baseModel';
 
 const schema = yup.object();
 
-const idgen = docuri.route('df-install/:dwarfFortressInstallId/generated-world/:id');
+const idgen = docuri.route(
+	'df-install/:dwarfFortressInstallId/generated-world/:id'
+);
 
 export default baseModel('dwarfFortressInstall', schema);
 

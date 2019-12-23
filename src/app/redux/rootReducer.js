@@ -1,5 +1,6 @@
 import {combineReducers} from 'redux';
-import _ from 'lodash';
+import {compose} from 'ramda';
+import {mapEnhanceReducer} from '@matthemsteger/redux-utils-fn-selectors';
 import globalErrors from './modules/globalErrors';
 import dwarfFortressInstalls from './modules/dwarfFortressInstalls';
 import generatedWorlds from './modules/generatedWorlds';
@@ -7,19 +8,16 @@ import location from './modules/routing';
 import raws from './modules/raws';
 import rawFiles from './modules/rawFiles';
 
-const reducerToModelMap = new Map();
-reducerToModelMap.set(dwarfFortressInstalls, {path: 'dwarfFortressInstalls'});
-reducerToModelMap.set(generatedWorlds, {path: 'generatedWorlds'});
-reducerToModelMap.set(location, {path: 'location'});
-reducerToModelMap.set(raws, {path: 'raws'});
-reducerToModelMap.set(rawFiles, {path: 'rawFiles'});
-
-export default combineReducers({
+const reducerMap = {
 	globalErrors,
 	dwarfFortressInstalls,
 	generatedWorlds,
 	raws,
 	rawFiles,
-	location,
-	reducerToModelMap: _.constant(reducerToModelMap)
-});
+	location
+};
+
+export default compose(
+	mapEnhanceReducer(reducerMap),
+	combineReducers
+)(reducerMap);

@@ -1,33 +1,52 @@
 import {select} from 'redux-most';
 import {from as streamFrom, concatMap as _concatMap} from 'most';
-import R from 'ramda';
+import {
+	curry,
+	chain,
+	compose,
+	map,
+	range,
+	merge,
+	always,
+	identity,
+	prop,
+	partialRight,
+	pick,
+	omit
+} from 'ramda';
 import {fold as foldFuture, of as futureOf} from 'fluture';
 import Maybe from 'folktale/maybe';
 import uuid from 'uuid';
 import dfTools from 'df-tools';
 import {futureToStream, chainAction, foldMaybe} from './../../epicUtilities';
 import constants from './constants';
-import {generateWorld, createGeneratedWorld, finishCreateGeneratedWorld} from './actionCreators';
+import {
+	generateWorld,
+	createGeneratedWorld,
+	finishCreateGeneratedWorld
+} from './actionCreators';
 import {selectInstallById} from './../dwarfFortressInstalls';
 
-const concatMap = R.curry(_concatMap);
+const concatMap = curry(_concatMap);
 
 /**
  * takes in a config for generated multiple worlds, outputs an action to generate each world
  * @param  {Observable<Action>} action$
- * @return {Observable<Action>}                  CREATE_GENERATED_WORLD actions stream
+ * @return {Observable<Action>} CREATE_GENERATED_WORLD actions stream
  */
-export const generateWorldsEpic = R.compose(
-	R.chain(({payload: {installId, config, numWorlds = 1}}) =>
-		R.compose(
-			R.map(() => generateWorld({
-				id: uuid(),
-				createdAt: new Date().toISOString(),
-				dwarfFortressInstallId: installId,
-				config
-			})),
+export const generateWorldsEpic = compose(
+	chain(({payload: {installId, config, numWorlds = 1}}) =>
+		compose(
+			map(() =>
+				generateWorld({
+					id: uuid(),
+					createdAt: new Date().toISOString(),
+					dwarfFortressInstallId: installId,
+					config
+				})
+			),
 			streamFrom
-		)(R.range(0, numWorlds))
+		)(range(0, numWorlds))
 	),
 	select(constants.GENERATE_WORLDS)
 );
@@ -48,10 +67,7 @@ const extractGeneratedWorldInfo = ({
 		worldGenParams: worldGenParamsPath
 	},
 	region,
-	worldHistory: {
-		worldName,
-		friendlyWorldName
-	}
+	worldHistory: {worldName, friendlyWorldName}
 }) => ({
 	worldSitesAndPops,
 	detailedMapPath,
@@ -64,55 +80,91 @@ const extractGeneratedWorldInfo = ({
 	friendlyWorldName
 });
 
-const createGeneratedWorldError = R.curry((error, generatedWorld) => R.merge(error, {generatedWorld}));
+const createGeneratedWorldError = curry((error, generatedWorld) =>
+	merge(error, {generatedWorld})
+);
 
 export const generateWorldEpic = (action$, {getState}) =>
-	R.compose(
-		concatMap(({payload: {id, dwarfFortressInstallId, config, createdAt}}) =>
-			R.compose(
-				futureToStream,
-				foldFuture(
-					(error) => createGeneratedWorld(createGeneratedWorldError(error, {id, dwarfFortressInstallId, config, createdAt}), true),
-					R.identity
-				),
-				foldMaybe(
-					R.always(futureOf(createGeneratedWorld(createGeneratedWorldError(
-						new Error(`Could not find install ${dwarfFortressInstallId}`),
-						{
-							id,
-							dwarfFortressInstallId,
-							config,
-							createdAt
-						}
-					), true))),
-					R.identity
-				),
-				R.map(R.compose(
-					R.map(R.compose(
-						createGeneratedWorld,
-						R.merge({id, dwarfFortressInstallId, createdAt: new Date().toISOString()}),
-						extractGeneratedWorldInfo
-					)),
-					dfTools.worldgen.genWorld,
-					(dfRootPath) => ({dfRootPath, config}),
-					R.prop('path')
-				)),
-				Maybe.fromNullable,
-				R.always(selectInstallById(getState(), dwarfFortressInstallId))
-			)()
+	compose(
+		concatMap(
+			({payload: {id, dwarfFortressInstallId, config, createdAt}}) =>
+				compose(
+					futureToStream,
+					foldFuture(
+						(error) =>
+							createGeneratedWorld(
+								createGeneratedWorldError(error, {
+									id,
+									dwarfFortressInstallId,
+									config,
+									createdAt
+								}),
+								true
+							),
+						identity
+					),
+					foldMaybe(
+						always(
+							futureOf(
+								createGeneratedWorld(
+									createGeneratedWorldError(
+										new Error(
+											`Could not find install ${dwarfFortressInstallId}`
+										),
+										{
+											id,
+											dwarfFortressInstallId,
+											config,
+											createdAt
+										}
+									),
+									true
+								)
+							)
+						),
+						identity
+					),
+					map(
+						compose(
+							map(
+								compose(
+									createGeneratedWorld,
+									merge({
+										id,
+										dwarfFortressInstallId,
+										createdAt: new Date().toISOString()
+									}),
+									extractGeneratedWorldInfo
+								)
+							),
+							dfTools.worldgen.genWorld,
+							(dfRootPath) => ({dfRootPath, config}),
+							prop('path')
+						)
+					),
+					Maybe.fromNullable,
+					always(
+						selectInstallById(getState(), dwarfFortressInstallId)
+					)
+				)()
 		),
 		select(constants.GENERATE_WORLD)
 	)(action$);
 
-export const createGeneratedWorldEpic = R.compose(
-	R.chain(chainAction((database, generatedWorld) =>
-		R.compose(
-			futureToStream,
-			foldFuture(R.partialRight(finishCreateGeneratedWorld, [true]), finishCreateGeneratedWorld),
-			R.map(R.merge(R.pick(['worldSitesAndPops'], generatedWorld))),
-			database.generatedWorlds.insert,
-			R.omit(['worldSitesAndPops'])
-		)(generatedWorld)
-	)),
+export const createGeneratedWorldEpic = compose(
+	chain(
+		chainAction((database, generatedWorld) =>
+			compose(
+				futureToStream,
+				foldFuture(
+					partialRight(finishCreateGeneratedWorld, [true]),
+					finishCreateGeneratedWorld
+				),
+				map(merge(pick(['worldSitesAndPops'], generatedWorld))),
+				database.generatedWorlds.insert,
+				omit(['worldSitesAndPops'])
+			)(generatedWorld)
+		)
+	),
 	select(constants.CREATE_GENERATED_WORLD)
 );

@@ -1,7 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import R from 'ramda';
-import {createComponent} from 'react-fela';
 import Styler from './Styler';
 import NavHeader from './Header';
 import media from './../style/media';
@@ -10,40 +8,35 @@ const GRID_HEADER = 'header';
 const GRID_NAV = 'nav';
 const GRID_CONTENT = 'main';
 
-const Header = createComponent(R.always({
-	gridArea: GRID_HEADER
-}), 'header');
-
-const SideNavigation = createComponent(R.always({
-	gridArea: GRID_NAV
-}));
-
-const Content = createComponent(R.always({
-	gridArea: GRID_CONTENT
-}), 'article');
-
-const rule = ({hasSideNavigation}) => ({
+const layout = ({hasSideNavigation}) => ({
 	display: 'grid',
 	gridTemplateAreas: `"${GRID_HEADER}" "${GRID_NAV}" "${GRID_CONTENT}"`,
 	[media.MEDIUM]: {
-		gridTemplateAreas: `"${GRID_HEADER} ${GRID_HEADER}" "${hasSideNavigation ? GRID_NAV : GRID_CONTENT} ${GRID_CONTENT}"`
+		gridTemplateAreas: `"${GRID_HEADER} ${GRID_HEADER}" "${
+			hasSideNavigation ? GRID_NAV : GRID_CONTENT
+		} ${GRID_CONTENT}"`
 	}
 });
 
+const styles = {
+	layout,
+	header: {gridArea: GRID_HEADER},
+	sideNavigation: {gridArea: GRID_NAV},
+	content: {gridArea: GRID_CONTENT}
+};
+
 export default function PageLayout({sideNavigation, header, children}) {
 	return (
-		<Styler rule={rule} hasSideNavigation={!!sideNavigation}>
-			{({className}) => (
-				<div className={className}>
-					<Header>
-						{header}
-					</Header>
-					{
-						sideNavigation ? <SideNavigation>{sideNavigation}</SideNavigation> : null
-					}
-					<Content>
-						{children}
-					</Content>
+		<Styler styles={styles} hasSideNavigation={!!sideNavigation}>
+			{({classNames}) => (
+				<div className={classNames.layout}>
+					<header className={classNames.header}>{header}</header>
+					{sideNavigation ? (
+						<div className={classNames.sideNavigation}>
+							{sideNavigation}
+						</div>
+					) : null}
+					<article className={classNames.content}>{children}</article>
 				</div>
 			)}
 		</Styler>
@@ -57,6 +50,6 @@ PageLayout.propTypes = {
 };
 
 PageLayout.defaultProps = {
-	header: (<NavHeader />),
+	header: <NavHeader />,
 	sideNavigation: null
 };

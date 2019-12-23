@@ -4,29 +4,42 @@ import dfTools from 'df-tools';
 import Maybe from 'folktale/maybe';
 import path from 'path';
 import {empty, of as streamOf} from 'most';
-import {fold as foldFuture, of as futureOf, reject as rejectedFutureOf} from 'fluture';
+import {
+	fold as foldFuture,
+	of as futureOf,
+	reject as rejectedFutureOf
+} from 'fluture';
+import {errorToAction} from '@matthemsteger/redux-utils-fn-actions';
 import constants from './constants';
 import {finishParseRawFileWorker} from './actionCreators';
 import {foldMaybe, futureToStream} from './../../epicUtilities';
-import {errorToAction} from './../../utils';
 import {fs} from './../../../../common/utils/fs';
 
-const addRawFileToActionError = R.curry((rawFile, errorAction) => R.assocPath(['payload', 'rawFileId'], R.prop('_id', rawFile), errorAction));
+const addRawFileToActionError = R.curry((rawFile, errorAction) =>
+	R.assocPath(['payload', 'rawFileId'], R.prop('_id', rawFile), errorAction)
+);
 
-const makeRawFileErrorAction = R.curry((rawFile, errorAction, error) => R.compose(addRawFileToActionError(rawFile), errorToAction(errorAction))(error));
+const makeRawFileErrorAction = R.curry((rawFile, errorAction, error) =>
+	R.compose(
+		addRawFileToActionError(rawFile),
+		errorToAction(errorAction)
+	)(error)
+);
 
 const makeRawCacheFileName = R.curry((appRoot, hash, rawFilePath) => {
 	const rawFileName = path.basename(rawFilePath, '.txt');
 	return path.join(appRoot, 'df-raw-cache', `${rawFileName}-${hash}.json`);
 });
 
-const supportedRawFileTypes = [
-	dfTools.raws.rawFileTypes.CREATURE
-];
+const supportedRawFileTypes = [dfTools.raws.rawFileTypes.CREATURE];
 
 const maybeSupportedRawFileType = (rawFileType) =>
 	R.compose(
-		R.ifElse(R.equals(true), R.always(Maybe.Just(rawFileType)), R.always(Maybe.Nothing())),
+		R.ifElse(
+			R.equals(true),
+			R.always(Maybe.Just(rawFileType)),
+			R.always(Maybe.Nothing())
+		),
 		R.contains(R.__, supportedRawFileTypes)
 	)(rawFileType);
 
@@ -49,8 +62,14 @@ const outputParsedToFile = R.curry((appRoot, hash, filePath, parsedRaw) => {
 const handleParseResult = (parseResult) => {
 	return R.ifElse(
 		R.propEq('status', true),
-		R.compose(futureOf, R.prop('value')),
-		R.compose(rejectedFutureOf, R.always(new Error('TODO: Add parse result error')))
+		R.compose(
+			futureOf,
+			R.prop('value')
+		),
+		R.compose(
+			rejectedFutureOf,
+			R.always(new Error('TODO: Add parse result error'))
+		)
 	)(parseResult);
 };
 
@@ -74,9 +93,46 @@ const parseRawAndOutputRawFilePath = R.curry((appRoot, install, rawFile) => {
 export const parseAndCacheRawFile = R.compose(
 	R.chain(({payload: {install, rawFile}, meta: {appRoot}}) => {
 		return R.compose(
-			foldMaybe(R.always(streamOf(makeRawFileErrorAction(rawFile, finishParseRawFileWorker, {message: `rawFileType ${R.prop('rawFileType', rawFile)} is not supported`}))), futureToStream),
-			R.map(R.compose(foldFuture(makeRawFileErrorAction(rawFile, finishParseRawFileWorker), finishParseRawFileWorker), R.map(R.compose(R.merge(rawFile), R.objOf('parsedCachePath'))), parseRawAndOutputRawFilePath(appRoot, install))),
-			R.compose(R.map(R.always(rawFile)), maybeSupportedRawFileType, R.prop('rawFileType'))
+			foldMaybe(
+				R.always(
+					streamOf(
+						makeRawFileErrorAction(
+							rawFile,
+							finishParseRawFileWorker,
+							{
+								message: `rawFileType ${R.prop(
+									'rawFileType',
+									rawFile
+								)} is not supported`
+							}
+						)
+					)
+				),
+				futureToStream
+			),
+			R.map(
+				R.compose(
+					foldFuture(
+						makeRawFileErrorAction(
+							rawFile,
+							finishParseRawFileWorker
+						),
+						finishParseRawFileWorker
+					),
+					R.map(
+						R.compose(
+							R.merge(rawFile),
+							R.objOf('parsedCachePath')
+						)
+					),
+					parseRawAndOutputRawFilePath(appRoot, install)
+				)
+			),
+			R.compose(
+				R.map(R.always(rawFile)),
+				maybeSupportedRawFileType,
+				R.prop('rawFileType')
+			)
 		)(rawFile);
 	}),
 	select(constants.WORKER_PARSE_RAW_FILE)
